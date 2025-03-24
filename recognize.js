@@ -1,14 +1,24 @@
 import * as cocoSsd from "@tensorflow-models/coco-ssd";
-import * as tf from "@tensorflow/tfjs-node";
+import * as tf from "@tensorflow/tfjs";
 import fs from "fs";
+import sharp from "sharp";
+
+const createImageTensor = async (imagePath) => {
+  const imageBuffer = fs.readFileSync(imagePath);
+  const { data, info } = await sharp(imageBuffer)
+    .toFormat("raw")
+    .toBuffer({ resolveWithObject: true });  
+
+  return tf.tensor3d(data, [info.height, info.width, 3], "int32");
+};
 
 async function runObjectDetection(imagePath) {
   console.log("Loading model...");
   const model = await cocoSsd.load();
   console.log("Model loaded!");
 
-  const imageBuffer = fs.readFileSync(imagePath);
-  const decodedImage = tf.node.decodeImage(imageBuffer);
+  const decodedImage = await createImageTensor(imagePath);
+  console.log(decodedImage);
 
   console.log("Detecting objects...");
   const predictions = await model.detect(decodedImage);
