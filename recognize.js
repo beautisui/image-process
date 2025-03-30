@@ -5,9 +5,12 @@ import sharp from "sharp";
 
 const createImageTensor = async (imagePath) => {
   const imageBuffer = fs.readFileSync(imagePath);
+
   const { data, info } = await sharp(imageBuffer)
+    .jpeg({ progressive: false })
+    .resize(640, 640)
     .toFormat("raw")
-    .toBuffer({ resolveWithObject: true });  
+    .toBuffer({ resolveWithObject: true });
 
   return tf.tensor3d(data, [info.height, info.width, 3], "int32");
 };
@@ -18,10 +21,10 @@ async function runObjectDetection(imagePath) {
   console.log("Model loaded!");
 
   const decodedImage = await createImageTensor(imagePath);
-  console.log(decodedImage);
 
   console.log("Detecting objects...");
   const predictions = await model.detect(decodedImage);
+  console.log(predictions);
 
   console.log("Detected Objects:");
   predictions.forEach((pred, i) => {
